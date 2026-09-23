@@ -1,7 +1,6 @@
 import Foundation
 
 actor PipedClient: AudioResolving {
-    private let direct = InnerTubeClient()
     private let baseURLs: [URL] = [
         URL(string: "https://pipedapi.kavin.rocks")!,
         URL(string: "https://pipedapi.leptons.xyz")!,
