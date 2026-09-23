@@ -58,20 +58,65 @@ async function api(path, options = {}) {
 async function search(q) {
   renderStatus("Searching…");
   try {
-    const data = await api("/search?q=" + encodeURIComponent(q) + "&filter=music");
-    state.results = (Array.isArray(data) ? data : data.items || []).filter(x => x.id || x.url);
+    // Use Zemer's own production search engine for discovery.
+    // It searches the same whitelist/corpus used by the current Zemer app.
+    const url = "https://search.zemer.io/search?q=" + encodeURIComponent(q)
+      + "&allowFemale=0&kidZone=0&blockVideos=1&k=50";
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error("Zemer search HTTP " + res.status);
+
+    const data = await res.json();
+    const groups = Array.isArray(data) ? data : Object.values(data || {});
+    const found = [];
+
+    const collect = (value) => {
+      if (Array.isArray(value)) {
+        value.forEach(collect);
+        return;
+      }
+      if (!value || typeof value !== "object") return;
+
+      // Zemer's grouped search response contains artists, songs, albums,
+      // singles, videos, playlists and podcasts. For playback we want rows
+      // that carry a YouTube video id.
+      if (value.videoId || value.id && (value.title || value.name)) found.push(value);
+
+      Object.entries(value).forEach(([key, child]) => {
+        if (!["continuation", "nextOffset"].includes(key)) collect(child);
+      });
+    };
+
+    groups.forEach(collect);
+
+    const seen = new Set();
+    state.results = found.filter(x => {
+      const id = x.videoId || x.id || x.url;
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+
     renderResults();
   } catch (e) {
+    console.error("Zemer search failed:", e);
     renderStatus("Couldn't search right now. Try again in a moment.");
   }
 }
 
 function normalize(v) {
-  let id = v.id;
-  if (!id && v.url) { try { id = new URL(v.url, location.origin).searchParams.get("v") || v.url.split("/").pop(); } catch {} }
+  let id = v.videoId || v.id;
+  if (!id && v.url) {
+    try {
+      id = new URL(v.url, location.origin).searchParams.get("v") || v.url.split("/").pop();
+    } catch {}
+  }
+
   return {
-    id, title:v.title || "Unknown", uploader:v.uploaderName || v.uploader || "YouTube Music",
-    thumbnail:v.thumbnail || "", duration:v.duration || 0
+    id,
+    title: v.title || v.name || "Unknown",
+    uploader: v.artistName || v.uploaderName || v.artist || v.uploader || "Zemer",
+    thumbnail: v.thumbnail || v.thumbnailUrl || v.cover || "",
+    duration: v.duration || v.durationSeconds || 0
   };
 }
 
