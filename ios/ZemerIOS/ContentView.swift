@@ -263,3 +263,5 @@ private struct MiniPlayer: View {
         .background(Color(UIColor.secondarySystemBackground))
     }
 }
+
+}
