@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var player: AudioPlayer
     @EnvironmentObject private var library: LibraryStore
+    @State private var showNowPlaying = false
 
     var body: some View {
         TabView {
@@ -18,10 +19,15 @@ struct ContentView: View {
                     Text("Library")
                 }
         }
+        .sheet(isPresented: $showNowPlaying) {
+            NowPlayingView().environmentObject(player)
+        }
         .safeAreaInset(edge: .bottom) {
             if player.current != nil {
-                MiniPlayer()
-                    .environmentObject(player)
+                Button { showNowPlaying = true } label: {
+                    MiniPlayer().environmentObject(player)
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -208,6 +214,83 @@ private struct SongRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+
+private struct NowPlayingView: View {
+    @EnvironmentObject private var player: AudioPlayer
+    @Environment(.presentationMode) private var presentationMode
+    @State private var sliderValue = 0.0
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                AsyncImage(url: URL(string: player.current?.thumbnail ?? "")) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.secondary.opacity(0.15))
+                        .overlay(Image(systemName: "music.note").font(.system(size: 48)))
+                }
+                .frame(maxWidth: 320, maxHeight: 320)
+                .aspectRatio(1, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+
+                VStack(spacing: 6) {
+                    Text(player.current?.title ?? "")
+                        .font(.title2.bold())
+                        .multilineTextAlignment(.center)
+                    Text(player.current?.subtitle ?? "")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                }
+
+                VStack(spacing: 4) {
+                    Slider(value: Binding(
+                        get: { sliderValue },
+                        set: { sliderValue = $0 }
+                    ), in: 0...max(player.duration, 1), onEditingChanged: { editing in
+                        if !editing { player.seek(to: sliderValue) }
+                    })
+                    HStack {
+                        Text(timeText(player.elapsed))
+                        Spacer()
+                        Text(timeText(player.duration))
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
+
+                HStack(spacing: 42) {
+                    Button { player.previous() } label: {
+                        Image(systemName: "backward.fill").font(.title)
+                    }
+                    Button { player.toggle() } label: {
+                        Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                            .font(.system(size: 58))
+                    }
+                    Button { player.next() } label: {
+                        Image(systemName: "forward.fill").font(.title)
+                    }
+                }
+
+                Spacer()
+            }
+            .padding(24)
+            .navigationTitle("Now Playing")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(leading: Button("Done") { presentationMode.wrappedValue.dismiss() })
+            .onAppear { sliderValue = player.elapsed }
+            .onReceive(player.$elapsed) { value in sliderValue = value }
+        }
+        .navigationViewStyle(.stack)
+    }
+
+    private func timeText(_ value: Double) -> String {
+        guard value.isFinite, value >= 0 else { return "0:00" }
+        let total = Int(value.rounded(.down))
+        return String(format: "%d:%02d", total / 60, total % 60)
     }
 }
 
