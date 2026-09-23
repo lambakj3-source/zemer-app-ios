@@ -1,6 +1,6 @@
 import Foundation
 
-actor PipedClient {
+actor PipedClient: AudioResolving {
     // Piped's public-instance list changes over time. Keep several known-good
     // instances so a temporary outage does not make the app unusable.
     private let baseURLs: [URL] = [
@@ -26,6 +26,8 @@ actor PipedClient {
 
                 var request = URLRequest(url: components.url!)
                 request.timeoutInterval = 12
+                request.setValue("Zemer-iOS/0.1", forHTTPHeaderField: "User-Agent")
+                request.setValue("application/json", forHTTPHeaderField: "Accept")
 
                 let (data, response) = try await URLSession.shared.data(for: request)
                 guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
@@ -52,6 +54,8 @@ actor PipedClient {
                 let url = baseURL.appendingPathComponent("streams").appendingPathComponent(videoID)
                 var request = URLRequest(url: url)
                 request.timeoutInterval = 15
+                request.setValue("Zemer-iOS/0.1", forHTTPHeaderField: "User-Agent")
+                request.setValue("application/json", forHTTPHeaderField: "Accept")
 
                 let (data, response) = try await URLSession.shared.data(for: request)
                 guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
