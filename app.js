@@ -1,8 +1,13 @@
 const PIPED = [
   "https://pipedapi.kavin.rocks",
-  "https://pipedapi.leptons.xyz",
-  "https://pipedapi.nosebs.ru",
-  "https://api.piped.yt"
+  "https://pipedapi.tokhmi.xyz",
+  "https://pipedapi.moomoo.me",
+  "https://pipedapi.syncpundit.io",
+  "https://api-piped.mha.fi",
+  "https://piped-api.garudalinux.org",
+  "https://pipedapi.rivo.lol",
+  "https://pipedapi.aeong.one",
+  "https://pipedapi.daviteusz.eu"
 ];
 
 const state = { results: [], queue: [], index: -1, favorites: loadFavorites() };
