@@ -71,10 +71,10 @@ final class AudioPlayer: NSObject, ObservableObject {
                 guard !Task.isCancelled else { return }
                 let item = AVPlayerItem(url: url)
                 player?.pause()
-                player = AVPlayer(playerItem: item)
-                if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
                 if let timeObserver, let oldPlayer = player { oldPlayer.removeTimeObserver(timeObserver) }
                 timeObserver = nil
+                player = AVPlayer(playerItem: item)
+                if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
                 endObserver = NotificationCenter.default.addObserver(
                     forName: .AVPlayerItemDidPlayToEndTime,
                     object: item,
@@ -106,6 +106,8 @@ final class AudioPlayer: NSObject, ObservableObject {
 
     func stop() {
         player?.pause()
+        if let timeObserver, let player { player.removeTimeObserver(timeObserver) }
+        timeObserver = nil
         player = nil
         isPlaying = false
         current = nil
