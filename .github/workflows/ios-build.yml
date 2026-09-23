@@ -1,0 +1,25 @@
+name: iOS Build
+
+on:
+  push:
+    branches:
+      - ios-prototype
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build iOS simulator app
+        run: |
+          xcodebuild \
+            -project ios/ZemerIOS.xcodeproj \
+            -scheme Zemer \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
