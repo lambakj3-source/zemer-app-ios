@@ -16,17 +16,27 @@ final class AudioPlayer: NSObject, ObservableObject {
     private var timeObserver: Any?
     private var queue: [Video] = []
     private var queueIndex = 0
+    private var loadToken = UUID()
+    private var interruptionObserver: NSObjectProtocol?
 
     override init() {
         super.init()
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
         try? AVAudioSession.sharedInstance().setActive(true)
         configureRemoteCommands()
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { [weak self] notification in
+            Task { @MainActor in self?.handleInterruption(notification) }
+        }
     }
 
     deinit {
         if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
         if let timeObserver, let player { player.removeTimeObserver(timeObserver) }
+        if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
     }
 
     func play(_ video: Video, queue: [Video] = []) {
@@ -61,6 +71,8 @@ final class AudioPlayer: NSObject, ObservableObject {
     }
 
     private func load(_ video: Video) {
+        loadToken = UUID()
+        let token = loadToken
         current = video
         isLoading = true
         isPlaying = false
@@ -68,7 +80,7 @@ final class AudioPlayer: NSObject, ObservableObject {
         Task {
             do {
                 let url = try await client.audioURL(for: video.id)
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled, token == loadToken else { return }
                 let item = AVPlayerItem(url: url)
                 player?.pause()
                 if let timeObserver, let oldPlayer = player { oldPlayer.removeTimeObserver(timeObserver) }
@@ -113,7 +125,31 @@ final class AudioPlayer: NSObject, ObservableObject {
         current = nil
         queue.removeAll()
         queueIndex = 0
+        loadToken = UUID()
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    }
+
+    private func handleInterruption(_ notification: Notification) {
+        guard let info = notification.userInfo,
+              let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
+
+        switch type {
+        case .began:
+            isPlaying = false
+            updateNowPlaying()
+        case .ended:
+            if let optionsValue = info[AVAudioSessionInterruptionOptionKey] as? UInt,
+               AVAudioSession.InterruptionOptions(rawValue: optionsValue).contains(.shouldResume),
+               current != nil {
+                try? AVAudioSession.sharedInstance().setActive(true)
+                player?.play()
+                isPlaying = true
+                updateNowPlaying()
+            }
+        @unknown default:
+            break
+        }
     }
 
     private func configureRemoteCommands() {
