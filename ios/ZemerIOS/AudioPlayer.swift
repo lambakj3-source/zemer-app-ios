@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import MediaPlayer
 import Combine
+import UIKit
 
 @MainActor
 final class AudioPlayer: NSObject, ObservableObject {
@@ -20,6 +21,7 @@ final class AudioPlayer: NSObject, ObservableObject {
     private var queueIndex = 0
     private var loadToken = UUID()
     private var interruptionObserver: NSObjectProtocol?
+    private var artworkCache: [String: MPMediaItemArtwork] = [:]
 
     override init() {
         super.init()
@@ -189,7 +191,7 @@ final class AudioPlayer: NSObject, ObservableObject {
     private func playCommand() { player?.play(); isPlaying = true; updateNowPlaying() }
     private func pauseCommand() { player?.pause(); isPlaying = false; updateNowPlaying() }
 
-    private func updateNowPlaying() {
+    private func updateNowPlaying(artwork: MPMediaItemArtwork? = nil) {
         guard let current else { return }
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: current.title,
@@ -198,6 +200,8 @@ final class AudioPlayer: NSObject, ObservableObject {
         ]
         if let duration = current.duration { info[MPMediaItemPropertyPlaybackDuration] = Double(duration) }
         info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
+        if let artwork { info[MPMediaItemPropertyArtwork] = artwork }
+        else if let cached = artworkCache[current.id] { info[MPMediaItemPropertyArtwork] = cached }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 }
