@@ -12,6 +12,7 @@
         100000000000000000000003 /* PipedClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* PipedClient.swift */; };
         100000000000000000000004 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* AudioPlayer.swift */; };
         100000000000000000000005 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* ContentView.swift */; };
+        100000000000000000000006 /* LibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000008 /* LibraryStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,7 @@
         200000000000000000000005 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
         200000000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
         200000000000000000000007 /* Zemer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zemer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+        200000000000000000000008 /* LibraryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +53,7 @@
                 200000000000000000000003 /* PipedClient.swift */,
                 200000000000000000000004 /* AudioPlayer.swift */,
                 200000000000000000000005 /* ContentView.swift */,
+                200000000000000000000008 /* LibraryStore.swift */,
                 200000000000000000000006 /* Info.plist */,
             );
             path = ZemerIOS;
@@ -135,6 +138,7 @@
                 100000000000000000000003 /* PipedClient.swift in Sources */,
                 100000000000000000000004 /* AudioPlayer.swift in Sources */,
                 100000000000000000000005 /* ContentView.swift in Sources */,
+                100000000000000000000006 /* LibraryStore.swift in Sources */,
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
