@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import Combine
 
 @MainActor
 final class AudioPlayer: NSObject, ObservableObject {
@@ -43,7 +44,9 @@ final class AudioPlayer: NSObject, ObservableObject {
                     object: item,
                     queue: .main
                 ) { [weak self] _ in
-                    self?.isPlaying = false
+                    Task { @MainActor in
+                        self?.isPlaying = false
+                    }
                 }
                 player?.play()
                 isPlaying = true
