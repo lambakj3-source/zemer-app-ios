@@ -29,4 +29,5 @@ $("part").onclick=()=>openFull();$("ptitle").onclick=()=>openFull();$("psub").on
 $("closeFull").onclick=()=>$("full").classList.remove("open");$("openQueue").onclick=()=>{};
 function openFull(){$("full").classList.add("open");updatePlayer();}
 $("seek").addEventListener("input",()=>{const a=$("audio"),d=a.duration||0;a.currentTime=d*(Number($("seek").value)/1000);});
-\n$("audio").addEventListener("ended",next);$("audio").addEventListener("play",()=>{state.playing=true;updateButtons();});$("audio").addEventListener("pause",()=>{state.playing=false;updateButtons();});$("audio").addEventListener("error",()=>{console.error("Zemer stream unavailable");});\n
+
+$("audio").addEventListener("ended",next);$("audio").addEventListener("play",()=>{state.playing=true;updateButtons();});$("audio").addEventListener("pause",()=>{state.playing=false;updateButtons();});$("audio").addEventListener("error",()=>{console.error("Zemer stream unavailable");});
