@@ -1,4 +1,4 @@
-const CACHE = "zemer-web-v2";
+const CACHE = "zemer-web-v3";
 const APP = ["./","./index.html","./styles.css","./app.js","./manifest.webmanifest","./icon.svg"];
 
 self.addEventListener("install", e => {
@@ -15,9 +15,10 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
+  const path = new URL(e.request.url).pathname;
 
-  // Always get JavaScript from the network when possible so fixes go live.
-  if (new URL(e.request.url).pathname.endsWith("/app.js")) {
+  // HTML and JS must update immediately after a deployment.
+  if (path.endsWith("/app.js") || path.endsWith("/index.html") || path.endsWith("/zemer-app-ios/")) {
     e.respondWith(
       fetch(e.request).then(response => {
         const copy = response.clone();
