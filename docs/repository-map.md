@@ -77,7 +77,7 @@ The following inventory is generated from repository files outside `.git`, `.gra
 
 ### Counts
 
-- Files counted: `1384`
+- Files counted: `1385`
 - By extension:
   - `.kt`: `883`
   - `.xml`: `192`
@@ -85,8 +85,8 @@ The following inventory is generated from repository files outside `.git`, `.gra
   - `.md`: `73`
   - `.json`: `53`
   - `.webp`: `15`
+  - `.html`: `7`
   - `[none]`: `7`
-  - `.html`: `6`
   - `.kts`: `6`
   - `.yml`: `6`
   - `.sh`: `5`
@@ -124,7 +124,7 @@ The following inventory is generated from repository files outside `.git`, `.gra
 | `AGENTS.md` | 1945 lines | `.md` |
 | `LICENSE` | 674 lines | `[none]` |
 | `README.md` | 9 lines | `.md` |
-| `api/stream.js` | 39 lines | `.js` |
+| `api/stream.js` | 66 lines | `.js` |
 | `app/.gitignore` | 1 lines | `[none]` |
 | `app/build.gradle.kts` | 295 lines | `.kts` |
 | `app/lint.xml` | 12 lines | `.xml` |
@@ -1241,7 +1241,7 @@ The following inventory is generated from repository files outside `.git`, `.gra
 | `docs/recognize_music/06-testing-and-maintenance.md` | 54 lines | `.md` |
 | `docs/recognize_music/README.md` | 71 lines | `.md` |
 | `docs/reference/kotlin-files.md` | 906 lines | `.md` |
-| `docs/reference/non-kotlin-files.md` | 441 lines | `.md` |
+| `docs/reference/non-kotlin-files.md` | 442 lines | `.md` |
 | `docs/reference/resource-index.md` | 255 lines | `.md` |
 | `docs/remote_cipher_config/01-why-it-exists.md` | 88 lines | `.md` |
 | `docs/remote_cipher_config/02-file-format.md` | 116 lines | `.md` |
@@ -1251,7 +1251,7 @@ The following inventory is generated from repository files outside `.git`, `.gra
 | `docs/remote_cipher_config/06-harness-and-monitor.md` | 101 lines | `.md` |
 | `docs/remote_cipher_config/07-runbook.md` | 101 lines | `.md` |
 | `docs/remote_cipher_config/README.md` | 112 lines | `.md` |
-| `docs/repository-map.md` | 1499 lines | `.md` |
+| `docs/repository-map.md` | 1500 lines | `.md` |
 | `docs/sabr/README.md` | 543 lines | `.md` |
 | `docs/stations/README.md` | 69 lines | `.md` |
 | `docs/status/README.md` | 122 lines | `.md` |
@@ -1270,6 +1270,7 @@ The following inventory is generated from repository files outside `.git`, `.gra
 | `gradle/wrapper/gradle-wrapper.properties` | 8 lines | `.properties` |
 | `gradlew` | 248 lines | `[none]` |
 | `gradlew.bat` | 93 lines | `.bat` |
+| `index.html` | 15 lines | `.html` |
 | `innertube/.gitignore` | 1 lines | `[none]` |
 | `innertube/build.gradle.kts` | 18 lines | `.kts` |
 | `innertube/src/main/kotlin/com/metrolist/innertube/InnerTube.kt` | 728 lines | `.kt` |

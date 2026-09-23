@@ -1,6 +1,6 @@
 # Non-Kotlin file reference
 
-Every tracked non-Kotlin path outside `docs/` is listed. Text files report line counts; binary files report byte counts; gitlinks are recorded as non-file tracked paths. Total paths: `435`.
+Every tracked non-Kotlin path outside `docs/` is listed. Text files report line counts; binary files report byte counts; gitlinks are recorded as non-file tracked paths. Total paths: `436`.
 
 | Path | Size/status | Type metadata |
 | --- | ---: | --- |
@@ -15,7 +15,7 @@ Every tracked non-Kotlin path outside `docs/` is listed. Text files report line 
 | `AGENTS.md` | 1945 lines | text `.md` |
 | `LICENSE` | 674 lines | text `[none]` |
 | `README.md` | 9 lines | text `.md` |
-| `api/stream.js` | 39 lines | text `.js` |
+| `api/stream.js` | 66 lines | text `.js` |
 | `app/.gitignore` | 1 lines | text `[none]` |
 | `app/build.gradle.kts` | 295 lines | text `.kts`; plugins `com.android.application, android, kotlin.serialization, hilt, kotlin.ksp, compose.compiler, google.gms.google.services, firebase.crashlytics, rikka.tools.refine` |
 | `app/lint.xml` | 12 lines | text `.xml`; XML root `lint` |
@@ -306,6 +306,7 @@ Every tracked non-Kotlin path outside `docs/` is listed. Text files report line 
 | `gradle/wrapper/gradle-wrapper.properties` | 8 lines | text `.properties` |
 | `gradlew` | 248 lines | text `[none]` |
 | `gradlew.bat` | 93 lines | text `.bat` |
+| `index.html` | 15 lines | text `.html` |
 | `innertube/.gitignore` | 1 lines | text `[none]` |
 | `innertube/build.gradle.kts` | 18 lines | text `.kts`; plugins `kotlin.serialization, jvm` |
 | `lint.xml` | 6 lines | text `.xml`; XML root `lint` |
