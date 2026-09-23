@@ -8,6 +8,8 @@ final class AudioPlayer: NSObject, ObservableObject {
     @Published private(set) var current: Video?
     @Published private(set) var isPlaying = false
     @Published private(set) var isLoading = false
+    @Published private(set) var elapsed: Double = 0
+    @Published private(set) var duration: Double = 0
     @Published var errorMessage: String?
 
     private let client = PipedClient()
@@ -74,6 +76,8 @@ final class AudioPlayer: NSObject, ObservableObject {
         loadToken = UUID()
         let token = loadToken
         current = video
+        elapsed = 0
+        duration = Double(video.duration ?? 0)
         isLoading = true
         isPlaying = false
         errorMessage = nil
@@ -96,8 +100,15 @@ final class AudioPlayer: NSObject, ObservableObject {
                 isPlaying = true
                 isLoading = false
                 if let player {
-                    timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 600), queue: .main) { [weak self] _ in
-                        Task { @MainActor in self?.updateNowPlaying() }
+                    timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 600), queue: .main) { [weak self] time in
+                        Task { @MainActor in
+                            guard let self else { return }
+                            self.elapsed = time.seconds.isFinite ? max(0, time.seconds) : 0
+                            if let itemDuration = self.player?.currentItem?.duration.seconds, itemDuration.isFinite, itemDuration > 0 {
+                                self.duration = itemDuration
+                            }
+                            self.updateNowPlaying()
+                        }
                     }
                 }
                 updateNowPlaying()
@@ -107,6 +118,14 @@ final class AudioPlayer: NSObject, ObservableObject {
                 errorMessage = error.localizedDescription
             }
         }
+    }
+
+    func seek(to seconds: Double) {
+        guard let player, seconds.isFinite else { return }
+        let target = max(0, min(seconds, duration > 0 ? duration : seconds))
+        player.seek(to: CMTime(seconds: target, preferredTimescale: 600))
+        elapsed = target
+        updateNowPlaying()
     }
 
     func toggle() {
@@ -122,6 +141,8 @@ final class AudioPlayer: NSObject, ObservableObject {
         timeObserver = nil
         player = nil
         isPlaying = false
+        elapsed = 0
+        duration = 0
         current = nil
         queue.removeAll()
         queueIndex = 0
@@ -160,8 +181,7 @@ final class AudioPlayer: NSObject, ObservableObject {
         center.previousTrackCommand.addTarget { [weak self] _ in Task { @MainActor in self?.previous() }; return .success }
         center.changePlaybackPositionCommand.addTarget { [weak self] event in
             guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
-            self?.player?.seek(to: CMTime(seconds: event.positionTime, preferredTimescale: 600))
-            self?.updateNowPlaying()
+            self?.seek(to: event.positionTime)
             return .success
         }
     }
@@ -177,7 +197,7 @@ final class AudioPlayer: NSObject, ObservableObject {
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0
         ]
         if let duration = current.duration { info[MPMediaItemPropertyPlaybackDuration] = Double(duration) }
-        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player?.currentTime().seconds ?? 0
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 }
