@@ -264,4 +264,3 @@ private struct MiniPlayer: View {
     }
 }
 
-}
