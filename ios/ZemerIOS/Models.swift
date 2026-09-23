@@ -29,6 +29,15 @@ struct Video: Identifiable, Codable, Hashable {
         case id, title, uploaderName, thumbnail, duration, url
     }
 
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encodeIfPresent(uploaderName, forKey: .uploaderName)
+        try container.encodeIfPresent(thumbnail, forKey: .thumbnail)
+        try container.encodeIfPresent(duration, forKey: .duration)
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let rawID = try container.decodeIfPresent(String.self, forKey: .id)
