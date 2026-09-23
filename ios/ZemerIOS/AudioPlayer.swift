@@ -114,6 +114,7 @@ final class AudioPlayer: NSObject, ObservableObject {
                     }
                 }
                 updateNowPlaying()
+                loadArtwork(for: video, token: token)
             } catch {
                 isLoading = false
                 isPlaying = false
@@ -190,6 +191,24 @@ final class AudioPlayer: NSObject, ObservableObject {
 
     private func playCommand() { player?.play(); isPlaying = true; updateNowPlaying() }
     private func pauseCommand() { player?.pause(); isPlaying = false; updateNowPlaying() }
+
+    private func loadArtwork(for video: Video, token: UUID) {
+        guard let thumbnail = video.thumbnail, let url = URL(string: thumbnail) else { return }
+        if let artwork = artworkCache[video.id] {
+            updateNowPlaying(artwork: artwork)
+            return
+        }
+        Task {
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                guard token == loadToken, let image = UIImage(data: data) else { return }
+                let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+                artworkCache[video.id] = artwork
+                updateNowPlaying(artwork: artwork)
+            } catch {
+            }
+        }
+    }
 
     private func updateNowPlaying(artwork: MPMediaItemArtwork? = nil) {
         guard let current else { return }
