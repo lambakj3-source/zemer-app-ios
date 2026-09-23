@@ -28,7 +28,7 @@ struct ContentView: View {
                 } else {
                     List(results) { video in
                         Button {
-                            player.play(video)
+                            player.play(video, queue: results)
                         } label: {
                             SongRow(video: video, isCurrent: player.current?.id == video.id)
                         }
@@ -151,10 +151,27 @@ private struct MiniPlayer: View {
             if player.isLoading {
                 ProgressView()
             } else {
+                HStack(spacing: 14) {
+                Button {
+                    player.previous()
+                } label: {
+                    Image(systemName: "backward.fill")
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
+
                 Button {
                     player.toggle()
                 } label: {
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    player.next()
+                } label: {
+                    Image(systemName: "forward.fill")
                         .font(.title3)
                 }
                 .buttonStyle(.plain)
