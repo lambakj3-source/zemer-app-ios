@@ -159,7 +159,7 @@
 			};
 			name = Debug;
 		};
-		700000000000000002 /* Release */ = {
+		700000000000000003 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -188,7 +188,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		700000000000000002 /* Build configuration list for PBXNativeTarget "Zemer" */ = {
+		700000000000000004 /* Build configuration list for PBXNativeTarget "Zemer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				700000000000000001 /* Debug */,
