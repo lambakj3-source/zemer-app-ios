@@ -82,19 +82,20 @@ async function search(q) {
       data = await proxied.json();
     }
 
-    // The Zemer API intentionally returns grouped categories, like the
-    // Android app: artists, songs, albums, singles, videos, playlists, etc.
+    // Zemer's API returns { q, count, categories: { ... } }.
+    // Use the exact category-grouped wire format used by the Android app.
+    const categories = data.categories || {};
     const groups = [
-      ["Songs", data.songs],
-      ["Artists", data.artists],
-      ["Albums", data.albums],
-      ["Singles", data.singles],
-      ["Videos", data.videos],
-      ["Playlists", data.playlists],
-      ["Artist playlists", data.artistPlaylists],
-      ["Community playlists", data.communityPlaylists],
-      ["Podcasts", data.podcasts],
-      ["Episodes", data.episodes]
+      ["Songs", categories.songs],
+      ["Artists", categories.artists],
+      ["Albums", categories.albums],
+      ["Singles", categories.singles],
+      ["Videos", categories.videos],
+      ["Playlists", categories.playlists],
+      ["Artist playlists", categories.artistPlaylists],
+      ["Community playlists", categories.communityPlaylists],
+      ["Podcasts", categories.podcasts],
+      ["Episodes", categories.episodes]
     ];
 
     const found = [];
