@@ -2,6 +2,34 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var player: AudioPlayer
+    @EnvironmentObject private var library: LibraryStore
+
+    var body: some View {
+        TabView {
+            SearchTab()
+                .tabItem {
+                    Image(systemName: "magnifyingglass")
+                    Text("Search")
+                }
+
+            LibraryTab()
+                .tabItem {
+                    Image(systemName: "music.note.list")
+                    Text("Library")
+                }
+        }
+        .safeAreaInset(edge: .bottom) {
+            if player.current != nil {
+                MiniPlayer()
+                    .environmentObject(player)
+            }
+        }
+    }
+}
+
+private struct SearchTab: View {
+    @EnvironmentObject private var player: AudioPlayer
+    @EnvironmentObject private var library: LibraryStore
     @State private var query = ""
     @State private var results: [Video] = []
     @State private var isSearching = false
@@ -33,6 +61,16 @@ struct ContentView: View {
                             SongRow(video: video, isCurrent: player.current?.id == video.id)
                         }
                         .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button {
+                                library.toggleFavorite(video)
+                            } label: {
+                                Label(
+                                    library.isFavorite(video) ? "Remove" : "Save",
+                                    systemImage: library.isFavorite(video) ? "star.slash" : "star"
+                                )
+                            }
+                        }
                     }
                     .listStyle(.plain)
                 }
@@ -45,19 +83,13 @@ struct ContentView: View {
                     if isSearching { ProgressView() }
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                if player.current != nil {
-                    MiniPlayer()
-                        .environmentObject(player)
-                }
-            }
-            .alert("Playback", isPresented: Binding(
-                get: { player.errorMessage != nil },
-                set: { if !$0 { player.errorMessage = nil } }
+            .alert("Search", isPresented: Binding(
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
             )) {
-                Button("OK") { player.errorMessage = nil }
+                Button("OK") { errorMessage = nil }
             } message: {
-                Text(player.errorMessage ?? "")
+                Text(errorMessage ?? "")
             }
         }
         .navigationViewStyle(.stack)
@@ -68,6 +100,7 @@ struct ContentView: View {
         guard !text.isEmpty else { return }
         isSearching = true
         errorMessage = nil
+
         Task {
             do {
                 results = try await client.search(text)
@@ -76,6 +109,49 @@ struct ContentView: View {
             }
             isSearching = false
         }
+    }
+}
+
+private struct LibraryTab: View {
+    @EnvironmentObject private var player: AudioPlayer
+    @EnvironmentObject private var library: LibraryStore
+
+    var body: some View {
+        NavigationView {
+            Group {
+                if library.favorites.isEmpty {
+                    VStack(spacing: 14) {
+                        Image(systemName: "star")
+                            .font(.system(size: 48))
+                        Text("Your library is empty")
+                            .font(.headline)
+                        Text("Save songs from Search to keep them here.")
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(32)
+                } else {
+                    List(library.favorites) { video in
+                        Button {
+                            player.play(video, queue: library.favorites)
+                        } label: {
+                            SongRow(video: video, isCurrent: player.current?.id == video.id)
+                        }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                library.toggleFavorite(video)
+                            } label: {
+                                Label("Remove", systemImage: "trash")
+                            }
+                        }
+                    }
+                    .listStyle(.plain)
+                }
+            }
+            .navigationTitle("Library")
+        }
+        .navigationViewStyle(.stack)
     }
 }
 
@@ -124,7 +200,9 @@ private struct SongRow: View {
                         .foregroundColor(.secondary)
                 }
             }
+
             Spacer()
+
             if isCurrent {
                 Image(systemName: "waveform")
             }
@@ -147,34 +225,37 @@ private struct MiniPlayer: View {
                     .foregroundColor(.secondary)
                     .lineLimit(1)
             }
+
             Spacer()
+
             if player.isLoading {
                 ProgressView()
             } else {
                 HStack(spacing: 14) {
-                Button {
-                    player.previous()
-                } label: {
-                    Image(systemName: "backward.fill")
-                        .font(.title3)
-                }
-                .buttonStyle(.plain)
+                    Button {
+                        player.previous()
+                    } label: {
+                        Image(systemName: "backward.fill")
+                            .font(.title3)
+                    }
+                    .buttonStyle(.plain)
 
-                Button {
-                    player.toggle()
-                } label: {
-                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.title3)
-                }
-                .buttonStyle(.plain)
+                    Button {
+                        player.toggle()
+                    } label: {
+                        Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.title3)
+                    }
+                    .buttonStyle(.plain)
 
-                Button {
-                    player.next()
-                } label: {
-                    Image(systemName: "forward.fill")
-                        .font(.title3)
+                    Button {
+                        player.next()
+                    } label: {
+                        Image(systemName: "forward.fill")
+                            .font(.title3)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 16)
