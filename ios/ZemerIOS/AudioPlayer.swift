@@ -13,6 +13,7 @@ final class AudioPlayer: NSObject, ObservableObject {
     private let client = PipedClient()
     private var player: AVPlayer?
     private var endObserver: NSObjectProtocol?
+    private var timeObserver: Any?
     private var queue: [Video] = []
     private var queueIndex = 0
 
@@ -25,6 +26,7 @@ final class AudioPlayer: NSObject, ObservableObject {
 
     deinit {
         if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
+        if let timeObserver, let player { player.removeTimeObserver(timeObserver) }
     }
 
     func play(_ video: Video, queue: [Video] = []) {
@@ -71,6 +73,8 @@ final class AudioPlayer: NSObject, ObservableObject {
                 player?.pause()
                 player = AVPlayer(playerItem: item)
                 if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
+                if let timeObserver, let oldPlayer = player { oldPlayer.removeTimeObserver(timeObserver) }
+                timeObserver = nil
                 endObserver = NotificationCenter.default.addObserver(
                     forName: .AVPlayerItemDidPlayToEndTime,
                     object: item,
@@ -79,6 +83,11 @@ final class AudioPlayer: NSObject, ObservableObject {
                 player?.play()
                 isPlaying = true
                 isLoading = false
+                if let player {
+                    timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 600), queue: .main) { [weak self] _ in
+                        Task { @MainActor in self?.updateNowPlaying() }
+                    }
+                }
                 updateNowPlaying()
             } catch {
                 isLoading = false
@@ -111,6 +120,12 @@ final class AudioPlayer: NSObject, ObservableObject {
         center.pauseCommand.addTarget { [weak self] _ in Task { @MainActor in self?.pauseCommand() }; return .success }
         center.nextTrackCommand.addTarget { [weak self] _ in Task { @MainActor in self?.next() }; return .success }
         center.previousTrackCommand.addTarget { [weak self] _ in Task { @MainActor in self?.previous() }; return .success }
+        center.changePlaybackPositionCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+            self?.player?.seek(to: CMTime(seconds: event.positionTime, preferredTimescale: 600))
+            self?.updateNowPlaying()
+            return .success
+        }
     }
 
     private func playCommand() { player?.play(); isPlaying = true; updateNowPlaying() }
