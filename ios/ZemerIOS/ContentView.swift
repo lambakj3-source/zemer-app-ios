@@ -9,14 +9,22 @@ struct ContentView: View {
     private let client = PipedClient()
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Group {
                 if results.isEmpty && query.isEmpty {
                     EmptyState()
                 } else if isSearching {
                     ProgressView("Searching…")
                 } else if results.isEmpty {
-                    ContentUnavailableView("No results", systemImage: "music.note", description: Text("Try another song or artist."))
+                    VStack(spacing: 12) {
+                        Image(systemName: "music.note")
+                            .font(.system(size: 44))
+                        Text("No results")
+                            .font(.headline)
+                        Text("Try another song or artist.")
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
                 } else {
                     List(results) { video in
                         Button {
@@ -33,7 +41,7 @@ struct ContentView: View {
             .searchable(text: $query, prompt: "Songs, artists, albums")
             .onSubmit(of: .search) { search() }
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     if isSearching { ProgressView() }
                 }
             }
@@ -52,6 +60,7 @@ struct ContentView: View {
                 Text(player.errorMessage ?? "")
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private func search() {
@@ -79,7 +88,7 @@ private struct EmptyState: View {
                 .font(.largeTitle.bold())
             Text("Search for music and play it in the background.")
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.secondary)
         }
         .padding(32)
     }
@@ -94,7 +103,8 @@ private struct SongRow: View {
             AsyncImage(url: URL(string: video.thumbnail ?? "")) { image in
                 image.resizable().scaledToFill()
             } placeholder: {
-                Rectangle().fill(.secondary.opacity(0.15))
+                Rectangle()
+                    .fill(Color.secondary.opacity(0.15))
                     .overlay(Image(systemName: "music.note"))
             }
             .frame(width: 64, height: 64)
@@ -106,12 +116,12 @@ private struct SongRow: View {
                     .lineLimit(2)
                 Text(video.subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(.secondary)
                     .lineLimit(1)
                 if !video.durationText.isEmpty {
                     Text(video.durationText)
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundColor(.secondary)
                 }
             }
             Spacer()
@@ -134,7 +144,7 @@ private struct MiniPlayer: View {
                     .lineLimit(1)
                 Text(player.current?.subtitle ?? "")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(.secondary)
                     .lineLimit(1)
             }
             Spacer()
@@ -152,6 +162,6 @@ private struct MiniPlayer: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
+        .background(Color(UIColor.secondarySystemBackground))
     }
 }
