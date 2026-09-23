@@ -26,6 +26,7 @@ final class AudioPlayer: NSObject, ObservableObject {
     private var queueIndex = 0
     private var loadToken = UUID()
     private var interruptionObserver: NSObjectProtocol?
+    private var itemFailureObserver: NSObjectProtocol?
     private var artworkCache: [String: MPMediaItemArtwork] = [:]
 
     override init() {
@@ -47,6 +48,7 @@ final class AudioPlayer: NSObject, ObservableObject {
         if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
         if let timeObserver, let player { player.removeTimeObserver(timeObserver) }
         if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
+        if let itemFailureObserver { NotificationCenter.default.removeObserver(itemFailureObserver) }
     }
 
     func play(_ video: Video, queue: [Video] = []) {
@@ -99,6 +101,20 @@ final class AudioPlayer: NSObject, ObservableObject {
                 timeObserver = nil
                 player = AVPlayer(playerItem: item)
                 if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
+                if let itemFailureObserver { NotificationCenter.default.removeObserver(itemFailureObserver) }
+                itemFailureObserver = NotificationCenter.default.addObserver(
+                    forName: .AVPlayerItemFailedToPlayToEndTime,
+                    object: item,
+                    queue: .main
+                ) { [weak self] notification in
+                    Task { @MainActor in
+                        guard let self, token == self.loadToken else { return }
+                        self.isLoading = false
+                        self.isPlaying = false
+                        self.errorMessage = (notification.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? Error)?.localizedDescription ?? "This track could not be played."
+                        self.updateNowPlaying()
+                    }
+                }
                 endObserver = NotificationCenter.default.addObserver(
                     forName: .AVPlayerItemDidPlayToEndTime,
                     object: item,
@@ -148,6 +164,8 @@ final class AudioPlayer: NSObject, ObservableObject {
         player?.pause()
         if let timeObserver, let player { player.removeTimeObserver(timeObserver) }
         timeObserver = nil
+        if let itemFailureObserver { NotificationCenter.default.removeObserver(itemFailureObserver) }
+        itemFailureObserver = nil
         player = nil
         isPlaying = false
         elapsed = 0
@@ -157,6 +175,7 @@ final class AudioPlayer: NSObject, ObservableObject {
         queueIndex = 0
         loadToken = UUID()
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        updateRemoteCommandState()
     }
 
     private func handleInterruption(_ notification: Notification) {
@@ -184,6 +203,9 @@ final class AudioPlayer: NSObject, ObservableObject {
 
     private func configureRemoteCommands() {
         let center = MPRemoteCommandCenter.shared()
+        center.nextTrackCommand.isEnabled = false
+        center.previousTrackCommand.isEnabled = false
+        center.changePlaybackPositionCommand.isEnabled = false
         center.playCommand.addTarget { [weak self] _ in Task { @MainActor in self?.playCommand() }; return .success }
         center.pauseCommand.addTarget { [weak self] _ in Task { @MainActor in self?.pauseCommand() }; return .success }
         center.nextTrackCommand.addTarget { [weak self] _ in Task { @MainActor in self?.next() }; return .success }
@@ -197,6 +219,13 @@ final class AudioPlayer: NSObject, ObservableObject {
 
     private func playCommand() { player?.play(); isPlaying = true; updateNowPlaying() }
     private func pauseCommand() { player?.pause(); isPlaying = false; updateNowPlaying() }
+
+    private func updateRemoteCommandState() {
+        let center = MPRemoteCommandCenter.shared()
+        center.nextTrackCommand.isEnabled = queueIndex + 1 < queue.count
+        center.previousTrackCommand.isEnabled = !queue.isEmpty
+        center.changePlaybackPositionCommand.isEnabled = player != nil
+    }
 
     private func loadArtwork(for video: Video, token: UUID) {
         guard let thumbnail = video.thumbnail, let url = URL(string: thumbnail) else { return }
