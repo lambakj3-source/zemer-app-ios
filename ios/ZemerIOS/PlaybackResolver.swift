@@ -55,12 +55,12 @@ private actor InnerTubePlaybackResolver {
             throw ResolverError.http
         }
 
-        let response = try PlaybackResponse.parse(data)
-        if response.playabilityStatus != nil && response.playabilityStatus != "OK" {
-            throw ResolverError.playability(response.playabilityReason ?? response.playabilityStatus ?? "unknown")
+        let parsed = try PlaybackResponse.parse(data)
+        if parsed.playabilityStatus != nil && parsed.playabilityStatus != "OK" {
+            throw ResolverError.playability(parsed.playabilityReason ?? parsed.playabilityStatus ?? "unknown")
         }
 
-        guard let best = response.formats
+        guard let best = parsed.formats
             .filter({ $0.mimeType.hasPrefix("audio/") })
             .sorted(by: { $0.bitrate > $1.bitrate })
             .first else {
