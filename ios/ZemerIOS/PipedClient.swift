@@ -120,24 +120,71 @@ private actor InnerTubeClient {
         guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
             throw DirectError.http
         }
-        guard let root = try JSONSerialization.jsonObject(with: dataResponse) as? [String: Any],
-              let streaming = root["streamingData"] as? [String: Any],
-              let formats = streaming["adaptiveFormats"] as? [[String: Any]] else {
+        guard let root = try JSONSerialization.jsonObject(with: dataResponse) as? [String: Any] else {
+            throw DirectError.invalidResponse
+        }
+
+        if let playability = root["playabilityStatus"] as? [String: Any],
+           let status = playability["status"] as? String,
+           status != "OK" {
+            let reason = playability["reason"] as? String
+            throw DirectError.playability(reason ?? status)
+        }
+
+        guard let streaming = root["streamingData"] as? [String: Any] else {
             throw DirectError.noStream
         }
 
+        // YouTube may put playable audio in either adaptiveFormats or formats.
+        // URLs protected by signatureCipher are intentionally left for the
+        // future Swift cipher layer rather than pretending they are playable.
+        let adaptive = streaming["adaptiveFormats"] as? [[String: Any]] ?? []
+        let progressive = streaming["formats"] as? [[String: Any]] ?? []
+        let formats = adaptive + progressive
+
         let audio = formats.compactMap { format -> (Int, URL)? in
-            guard let mime = format["mimeType"] as? String, mime.hasPrefix("audio/"),
-                  let urlString = format["url"] as? String,
-                  let url = URL(string: urlString) else { return nil }
+            guard let mime = format["mimeType"] as? String, mime.hasPrefix("audio/") else {
+                return nil
+            }
+            guard let urlString = format["url"] as? String,
+                  let url = URL(string: urlString) else {
+                return nil
+            }
             return (format["bitrate"] as? Int ?? 0, url)
         }.max(by: { $0.0 < $1.0 })
 
-        guard let audio else { throw DirectError.cipherRequired }
+        guard let audio else {
+            if formats.contains(where: { $0["signatureCipher"] != nil || $0["cipher"] != nil }) {
+                throw DirectError.cipherRequired
+            }
+            throw DirectError.noAudio
+        }
         return audio.1
     }
 
-    private enum DirectError: Error {
-        case http, noStream, cipherRequired
+    private enum DirectError: LocalizedError {
+        case http
+        case invalidResponse
+        case noStream
+        case noAudio
+        case cipherRequired
+        case playability(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .http:
+                return "YouTube did not return a successful playback response."
+            case .invalidResponse:
+                return "YouTube returned an invalid playback response."
+            case .noStream:
+                return "YouTube did not return streaming data."
+            case .noAudio:
+                return "YouTube returned no directly playable audio stream."
+            case .cipherRequired:
+                return "This stream requires signature decoding."
+            case .playability(let reason):
+                return "YouTube playback is unavailable: \(reason)"
+            }
+        }
     }
 }
