@@ -168,6 +168,8 @@
                 CLANG_ENABLE_MODULES = YES;
                 CLANG_ENABLE_OBJC_ARC = YES;
                 IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+                SDKROOT = iphoneos;
+                SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
                 PRODUCT_BUNDLE_IDENTIFIER = "com.zemerteam.zemer-ios";
                 PRODUCT_NAME = Zemer;
                 SWIFT_VERSION = 5.0;
