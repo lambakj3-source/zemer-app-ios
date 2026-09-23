@@ -1,39 +1,66 @@
-export default async function handler(request) {
-  const url = new URL(request.url);
-  const videoId = url.searchParams.get("v");
+module.exports = async function handler(req, res) {
+  const videoId = req.query && req.query.v;
 
-  if (!videoId) {
-    return new Response("Missing v", { status: 400 });
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Range, Content-Type");
+  res.setHeader("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
+  res.setHeader("Cache-Control", "no-store");
+
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
   }
 
-  const upstreamUrl =
-    "https://stream.zemer.io/stream?v=" + encodeURIComponent(videoId);
+  if (!videoId) {
+    res.status(400).send("Missing v");
+    return;
+  }
 
-  const upstream = await fetch(upstreamUrl, {
-    headers: {
-      "x-zemer-debug": "1",
-      "Accept": "audio/*"
-    },
-    signal: request.signal
-  });
+  try {
+    const upstream = await fetch(
+      "https://stream.zemer.io/stream?v=" + encodeURIComponent(videoId),
+      {
+        headers: {
+          "x-zemer-debug": "1",
+          "Accept": "audio/*"
+        }
+      }
+    );
 
-  const headers = new Headers();
-  const contentType = upstream.headers.get("content-type");
-  const contentLength = upstream.headers.get("content-length");
-  const contentRange = upstream.headers.get("content-range");
-  const acceptRanges = upstream.headers.get("accept-ranges");
+    res.statusCode = upstream.status;
 
-  headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
-  headers.set("Cache-Control", "no-store");
+    for (const [name, value] of upstream.headers) {
+      const lower = name.toLowerCase();
+      if (
+        lower === "content-type" ||
+        lower === "content-length" ||
+        lower === "content-range" ||
+        lower === "accept-ranges"
+      ) {
+        res.setHeader(name, value);
+      }
+    }
 
-  if (contentType) headers.set("Content-Type", contentType);
-  if (contentLength) headers.set("Content-Length", contentLength);
-  if (contentRange) headers.set("Content-Range", contentRange);
-  if (acceptRanges) headers.set("Accept-Ranges", acceptRanges);
+    if (!upstream.body) {
+      res.end();
+      return;
+    }
 
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers
-  });
-}
+    const reader = upstream.body.getReader();
+
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      res.write(Buffer.from(chunk.value));
+    }
+
+    res.end();
+  } catch (error) {
+    console.error("Zemer stream proxy error:", error);
+    if (!res.headersSent) {
+      res.status(502).send("Unable to reach Zemer stream");
+    } else {
+      res.end();
+    }
+  }
+};
