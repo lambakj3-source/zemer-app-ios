@@ -57,41 +57,73 @@ async function api(path, options = {}) {
 
 async function search(q) {
   renderStatus("Searching…");
+
+  const query =
+    "/search?q=" + encodeURIComponent(q) +
+    "&allowFemale=0&kidZone=0&blockVideos=1&k=30";
+
   try {
-    // Use Zemer's own production search engine for discovery.
-    // It searches the same whitelist/corpus used by the current Zemer app.
-    const url = "https://search.zemer.io/search?q=" + encodeURIComponent(q)
-      + "&allowFemale=0&kidZone=0&blockVideos=1&k=50";
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) throw new Error("Zemer search HTTP " + res.status);
-
-    const data = await res.json();
-    const groups = Array.isArray(data) ? data : Object.values(data || {});
-    const found = [];
-
-    const collect = (value) => {
-      if (Array.isArray(value)) {
-        value.forEach(collect);
-        return;
-      }
-      if (!value || typeof value !== "object") return;
-
-      // Zemer's grouped search response contains artists, songs, albums,
-      // singles, videos, playlists and podcasts. For playback we want rows
-      // that carry a YouTube video id.
-      if (value.videoId || value.id && (value.title || value.name)) found.push(value);
-
-      Object.entries(value).forEach(([key, child]) => {
-        if (!["continuation", "nextOffset"].includes(key)) collect(child);
+    // This is Zemer's real search API. GitHub Pages cannot proxy requests,
+    // so try the API directly first and then use a JSON CORS relay.
+    let data;
+    try {
+      const direct = await fetch("https://search.zemer.io" + query, {
+        headers: { Accept: "application/json" }
       });
-    };
+      if (!direct.ok) throw new Error("Zemer search HTTP " + direct.status);
+      data = await direct.json();
+    } catch (directError) {
+      const relay =
+        "https://api.allorigins.win/raw?url=" +
+        encodeURIComponent("https://search.zemer.io" + query);
 
-    groups.forEach(collect);
+      const proxied = await fetch(relay);
+      if (!proxied.ok) throw directError;
+      data = await proxied.json();
+    }
+
+    // The Zemer API intentionally returns grouped categories, like the
+    // Android app: artists, songs, albums, singles, videos, playlists, etc.
+    const groups = [
+      ["Songs", data.songs],
+      ["Artists", data.artists],
+      ["Albums", data.albums],
+      ["Singles", data.singles],
+      ["Videos", data.videos],
+      ["Playlists", data.playlists],
+      ["Artist playlists", data.artistPlaylists],
+      ["Community playlists", data.communityPlaylists],
+      ["Podcasts", data.podcasts],
+      ["Episodes", data.episodes]
+    ];
+
+    const found = [];
+    for (const [category, items] of groups) {
+      if (!Array.isArray(items)) continue;
+      for (const item of items) {
+        if (!item || typeof item !== "object") continue;
+        const id = item.videoId || item.id;
+        if (!id) continue;
+        found.push({ ...item, _category: category });
+      }
+    }
+
+    // Some server revisions wrap categories in a "results" object.
+    if (!found.length && data.results && typeof data.results === "object") {
+      for (const [category, items] of Object.entries(data.results)) {
+        if (!Array.isArray(items)) continue;
+        for (const item of items) {
+          if (!item || typeof item !== "object") continue;
+          const id = item.videoId || item.id;
+          if (id) found.push({ ...item, _category: category });
+        }
+      }
+    }
 
     const seen = new Set();
-    state.results = found.filter(x => {
-      const id = x.videoId || x.id || x.url;
-      if (!id || seen.has(id)) return false;
+    state.results = found.filter(item => {
+      const id = item.videoId || item.id;
+      if (seen.has(id)) return false;
       seen.add(id);
       return true;
     });
@@ -99,7 +131,7 @@ async function search(q) {
     renderResults();
   } catch (e) {
     console.error("Zemer search failed:", e);
-    renderStatus("Couldn't search right now. Try again in a moment.");
+    renderStatus("Search is temporarily unavailable. Please try again.");
   }
 }
 
