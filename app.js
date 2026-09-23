@@ -22,6 +22,8 @@ const durationText = (n) => {
 
 async function api(path, options = {}) {
   let last;
+
+  // Try the Piped instances directly first.
   for (const base of PIPED) {
     try {
       const controller = new AbortController();
@@ -30,8 +32,26 @@ async function api(path, options = {}) {
       clearTimeout(timer);
       if (!res.ok) throw new Error("server");
       return await res.json();
-    } catch (e) { last = e; }
+    } catch (e) {
+      last = e;
+    }
   }
+
+  // GitHub Pages is a static site, and some Piped instances do not expose
+  // browser CORS headers. Fall back to AllOrigins for the JSON API calls.
+  try {
+    const target = PIPED[0] + path;
+    const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(target);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), options.timeout || 15000);
+    const res = await fetch(proxy, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error("proxy");
+    return await res.json();
+  } catch (e) {
+    last = e;
+  }
+
   throw last || new Error("Music servers unavailable.");
 }
 
