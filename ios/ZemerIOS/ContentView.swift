@@ -227,71 +227,112 @@ private struct SongRow: View {
 
 private struct NowPlayingView: View {
     @EnvironmentObject private var player: AudioPlayer
-    @Environment(.presentationMode) private var presentationMode
-    @State private var sliderValue = 0.0
+    @Environment(\.presentationMode) private var presentationMode
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 24) {
-                AsyncImage(url: URL(string: player.current?.thumbnail ?? "")) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.secondary.opacity(0.15))
-                        .overlay(Image(systemName: "music.note").font(.system(size: 48)))
-                }
-                .frame(maxWidth: 320, maxHeight: 320)
-                .aspectRatio(1, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-
-                VStack(spacing: 6) {
-                    Text(player.current?.title ?? "")
-                        .font(.title2.bold())
-                        .multilineTextAlignment(.center)
-                    Text(player.current?.subtitle ?? "")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                }
-
-                VStack(spacing: 4) {
-                    Slider(value: Binding<Double>(
-                        get: { sliderValue },
-                        set: { sliderValue = $0 }
-                    ), in: 0...Swift.max(player.duration, 1.0), onEditingChanged: { editing in
-                        if !editing { player.seek(to: sliderValue) }
-                    })
-                    HStack {
-                        Text(timeText(player.elapsed))
-                        Spacer()
-                        Text(timeText(player.duration))
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                }
-
-                HStack(spacing: 42) {
-                    Button { player.previous() } label: {
-                        Image(systemName: "backward.fill").font(.title)
-                    }
-                    Button { player.toggle() } label: {
-                        Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                            .font(.system(size: 58))
-                    }
-                    Button { player.next() } label: {
-                        Image(systemName: "forward.fill").font(.title)
-                    }
-                }
-
-                Spacer()
-            }
-            .padding(24)
-            .navigationTitle("Now Playing")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(leading: Button("Done") { presentationMode.wrappedValue.dismiss() })
-            .onAppear { sliderValue = player.elapsed }
-            .onReceive(player.$elapsed) { value in sliderValue = value }
+            NowPlayingContent()
+                .navigationTitle("Now Playing")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarItems(leading: Button("Done") {
+                    presentationMode.wrappedValue.dismiss()
+                })
         }
         .navigationViewStyle(.stack)
+    }
+}
+
+private struct NowPlayingContent: View {
+    @EnvironmentObject private var player: AudioPlayer
+    @State private var sliderValue: Double = 0
+
+    var body: some View {
+        VStack(spacing: 24) {
+            ArtworkView(urlString: player.current?.thumbnail)
+                .frame(maxWidth: 320, maxHeight: 320)
+                .aspectRatio(1, contentMode: .fit)
+
+            VStack(spacing: 6) {
+                Text(player.current?.title ?? "")
+                    .font(.title2.bold())
+                    .multilineTextAlignment(.center)
+                Text(player.current?.subtitle ?? "")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            ProgressSlider(
+                value: $sliderValue,
+                duration: player.duration,
+                elapsed: player.elapsed,
+                onCommit: { player.seek(to: sliderValue) }
+            )
+
+            HStack(spacing: 42) {
+                Button { player.previous() } label: {
+                    Image(systemName: "backward.fill").font(.title)
+                }
+                Button { player.toggle() } label: {
+                    Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.system(size: 58))
+                }
+                Button { player.next() } label: {
+                    Image(systemName: "forward.fill").font(.title)
+                }
+            }
+
+            Spacer()
+        }
+        .padding(24)
+        .onAppear { sliderValue = player.elapsed }
+        .onReceive(player.$elapsed) { value in
+            sliderValue = value
+        }
+    }
+}
+
+private struct ArtworkView: View {
+    let urlString: String?
+
+    var body: some View {
+        AsyncImage(url: URL(string: urlString ?? "")) { phase in
+            switch phase {
+            case .success(let image):
+                image.resizable().scaledToFill()
+            default:
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.secondary.opacity(0.15))
+                    .overlay(Image(systemName: "music.note").font(.system(size: 48)))
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+private struct ProgressSlider: View {
+    @Binding var value: Double
+    let duration: Double
+    let elapsed: Double
+    let onCommit: () -> Void
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Slider(
+                value: $value,
+                in: 0...max(duration, 1.0),
+                onEditingChanged: { editing in
+                    if !editing { onCommit() }
+                }
+            )
+            HStack {
+                Text(timeText(elapsed))
+                Spacer()
+                Text(timeText(duration))
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
     }
 
     private func timeText(_ value: Double) -> String {
