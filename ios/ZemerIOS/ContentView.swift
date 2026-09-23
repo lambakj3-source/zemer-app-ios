@@ -40,6 +40,7 @@ private struct SearchTab: View {
     @State private var results: [Video] = []
     @State private var isSearching = false
     @State private var errorMessage: String?
+    @State private var searchGeneration = UUID()
     private let client = PipedClient()
 
     var body: some View {
@@ -106,13 +107,19 @@ private struct SearchTab: View {
         guard !text.isEmpty else { return }
         isSearching = true
         errorMessage = nil
+        let generation = UUID()
+        searchGeneration = generation
 
         Task {
             do {
-                results = try await client.search(text)
+                let newResults = try await client.search(text)
+                guard generation == searchGeneration else { return }
+                results = newResults
             } catch {
+                guard generation == searchGeneration else { return }
                 errorMessage = error.localizedDescription
             }
+            guard generation == searchGeneration else { return }
             isSearching = false
         }
     }
