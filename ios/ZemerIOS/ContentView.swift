@@ -254,10 +254,10 @@ private struct NowPlayingView: View {
                 }
 
                 VStack(spacing: 4) {
-                    Slider(value: Binding(
+                    Slider(value: Binding<Double>(
                         get: { sliderValue },
                         set: { sliderValue = $0 }
-                    ), in: 0...max(player.duration, 1), onEditingChanged: { editing in
+                    ), in: 0...Swift.max(player.duration, 1.0), onEditingChanged: { editing in
                         if !editing { player.seek(to: sliderValue) }
                     })
                     HStack {
