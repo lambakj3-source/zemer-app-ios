@@ -1,16 +1,2 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0e0a0b">
-<title>Zemer</title>
-<style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0e0a0b}
-iframe{display:block;width:100%;height:100%;border:0}
-</style>
-</head>
-<body>
-<iframe src="https://skmusic.shalomkarr.com/" title="Zemer Music" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#fff"><title>Zemer Search</title><style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#171717}body{padding:0 18px 100px}.wrap{width:min(900px,100%);margin:auto}header{display:flex;justify-content:center;padding:28px 0 18px}.logo{font-size:30px;font-weight:800;letter-spacing:-1px}.search{display:flex;gap:10px;max-width:720px;margin:8px auto 30px}.search input{flex:1;height:52px;border:1px solid #d7d7d7;border-radius:27px;padding:0 20px;font-size:17px;outline:0;background:#fafafa}.search button{height:52px;border:0;border-radius:27px;padding:0 24px;background:#111;color:#fff;font-size:16px;font-weight:700}#status{text-align:center;color:#777;margin:25px 0}.section{margin:28px 0}.section h2{font-size:20px;margin:0 0 12px}.row{display:flex;align-items:center;gap:14px;padding:11px 8px;border-radius:12px;cursor:pointer}.row:hover{background:#f5f5f5}.art{width:58px;height:58px;border-radius:8px;object-fit:cover;background:#eee;flex:none}.info{min-width:0}.title{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sub{font-size:14px;color:#777;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.play{margin-left:auto;border:0;background:#111;color:#fff;width:38px;height:38px;border-radius:50%;font-size:16px}.player{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #ddd;padding:10px 14px calc(10px + env(safe-area-inset-bottom));z-index:5;box-shadow:0 -3px 16px #00000012}.playerin{width:min(900px,100%);margin:auto;display:flex;align-items:center;gap:12px}.ptext{min-width:0;flex:1}.pcontrols button{border:0;background:#111;color:#fff;border-radius:50%;width:40px;height:40px}.progress{position:absolute;left:0;right:0;top:-2px;height:3px;background:#ddd}.progress i{display:block;width:0;height:100%;background:#111}.yt{position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:.01;pointer-events:none}@media(max-width:600px){body{padding-left:12px;padding-right:12px}.search button{padding:0 18px}.row{padding:10px 4px}.art{width:52px;height:52px}}</style></head><body><div class="wrap"><header><div class="logo">Zemer</div></header><form class="search" id="form"><input id="q" autocomplete="off" placeholder="Search songs, artists, albums…" autofocus><button>Search</button></form><div id="status">Search songs, artists, albums…</div><main id="results"></main></div><div class="player" id="player" hidden><div class="progress"><i id="bar"></i></div><div class="playerin"><img class="art" id="part" src="" alt=""><div class="ptext"><div class="title" id="ptitle"></div><div class="sub" id="psub"></div></div><div class="pcontrols"><button id="pause">▶</button></div></div></div><div id="yt" class="yt"></div><script src="https://www.youtube.com/iframe_api"></script><script src="./app.js?v=4"></script></body></html>
