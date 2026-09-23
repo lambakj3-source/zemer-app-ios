@@ -55,85 +55,11 @@ async function api(path, options = {}) {
   throw last || new Error("Music servers unavailable.");
 }
 
-async function search(q) {
-  renderStatus("Searching…");
-
-  const query =
-    "/search?q=" + encodeURIComponent(q) +
-    "&allowFemale=0&kidZone=0&blockVideos=1&k=30";
-
-  try {
-    // This is Zemer's real search API. GitHub Pages cannot proxy requests,
-    // so try the API directly first and then use a JSON CORS relay.
-    let data;
-    try {
-      const direct = await fetch("https://search.zemer.io" + query, {
-        headers: { Accept: "application/json" }
-      });
-      if (!direct.ok) throw new Error("Zemer search HTTP " + direct.status);
-      data = await direct.json();
-    } catch (directError) {
-      const relay =
-        "https://api.allorigins.win/raw?url=" +
-        encodeURIComponent("https://search.zemer.io" + query);
-
-      const proxied = await fetch(relay);
-      if (!proxied.ok) throw directError;
-      data = await proxied.json();
-    }
-
-    // Zemer's API returns { q, count, categories: { ... } }.
-    // Use the exact category-grouped wire format used by the Android app.
-    const categories = data.categories || {};
-    const groups = [
-      ["Songs", categories.songs],
-      ["Artists", categories.artists],
-      ["Albums", categories.albums],
-      ["Singles", categories.singles],
-      ["Videos", categories.videos],
-      ["Playlists", categories.playlists],
-      ["Artist playlists", categories.artistPlaylists],
-      ["Community playlists", categories.communityPlaylists],
-      ["Podcasts", categories.podcasts],
-      ["Episodes", categories.episodes]
-    ];
-
-    const found = [];
-    for (const [category, items] of groups) {
-      if (!Array.isArray(items)) continue;
-      for (const item of items) {
-        if (!item || typeof item !== "object") continue;
-        const id = item.videoId || item.id;
-        if (!id) continue;
-        found.push({ ...item, _category: category });
-      }
-    }
-
-    // Some server revisions wrap categories in a "results" object.
-    if (!found.length && data.results && typeof data.results === "object") {
-      for (const [category, items] of Object.entries(data.results)) {
-        if (!Array.isArray(items)) continue;
-        for (const item of items) {
-          if (!item || typeof item !== "object") continue;
-          const id = item.videoId || item.id;
-          if (id) found.push({ ...item, _category: category });
-        }
-      }
-    }
-
-    const seen = new Set();
-    state.results = found.filter(item => {
-      const id = item.videoId || item.id;
-      if (seen.has(id)) return false;
-      seen.add(id);
-      return true;
-    });
-
-    renderResults();
-  } catch (e) {
-    console.error("Zemer search failed:", e);
-    renderStatus("Search is temporarily unavailable. Please try again.");
-  }
+function search(q) {
+  // Use Zemer's actual search website directly. This avoids duplicating or
+  // reverse-engineering its private browser wiring on a static GitHub Pages app.
+  const url = "https://search.zemer.io/?q=" + encodeURIComponent(q);
+  window.location.href = url;
 }
 
 function normalize(v) {
