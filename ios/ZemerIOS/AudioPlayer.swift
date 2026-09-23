@@ -4,7 +4,6 @@ import MediaPlayer
 import Combine
 import UIKit
 
-@MainActor
 protocol AudioResolving {
     func audioURL(for videoID: String) async throws -> URL
 }
