@@ -5,6 +5,10 @@ import Combine
 import UIKit
 
 @MainActor
+protocol AudioResolving {
+    func audioURL(for videoID: String) async throws -> URL
+}
+
 final class AudioPlayer: NSObject, ObservableObject {
     @Published private(set) var current: Video?
     @Published private(set) var isPlaying = false
@@ -13,7 +17,8 @@ final class AudioPlayer: NSObject, ObservableObject {
     @Published private(set) var duration: Double = 0
     @Published var errorMessage: String?
 
-    private let client = PipedClient()
+    private let client: AudioResolving
+
     private var player: AVPlayer?
     private var endObserver: NSObjectProtocol?
     private var timeObserver: Any?
@@ -24,6 +29,7 @@ final class AudioPlayer: NSObject, ObservableObject {
     private var artworkCache: [String: MPMediaItemArtwork] = [:]
 
     override init() {
+        self.client = PipedClient()
         super.init()
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
         try? AVAudioSession.sharedInstance().setActive(true)
