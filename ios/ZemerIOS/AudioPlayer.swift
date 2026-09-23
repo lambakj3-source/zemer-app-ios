@@ -29,7 +29,7 @@ final class AudioPlayer: NSObject, ObservableObject {
     private var artworkCache: [String: MPMediaItemArtwork] = [:]
 
     override init() {
-        self.client = PipedClient()
+        self.client = PlaybackResolver()
         super.init()
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
         try? AVAudioSession.sharedInstance().setActive(true)
