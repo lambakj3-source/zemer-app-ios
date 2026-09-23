@@ -18,7 +18,7 @@ struct SearchResponse: Decodable {
     }
 }
 
-struct Video: Identifiable, Decodable, Hashable {
+struct Video: Identifiable, Codable, Hashable {
     let id: String
     let title: String
     let uploaderName: String?
