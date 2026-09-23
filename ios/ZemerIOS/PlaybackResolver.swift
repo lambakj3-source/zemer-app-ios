@@ -55,30 +55,31 @@ private actor InnerTubePlaybackResolver {
             throw ResolverError.http
         }
 
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let streaming = root["streamingData"] as? [String: Any] else {
-            throw ResolverError.noStream
+        let response = try PlaybackResponse.parse(data)
+        if response.playabilityStatus != nil && response.playabilityStatus != "OK" {
+            throw ResolverError.playability(response.playabilityReason ?? response.playabilityStatus ?? "unknown")
         }
 
-        let formats = (streaming["adaptiveFormats"] as? [[String: Any]] ?? [])
-            + (streaming["formats"] as? [[String: Any]] ?? [])
+        guard let best = response.formats
+            .filter({ $0.mimeType.hasPrefix("audio/") })
+            .sorted(by: { $0.bitrate > $1.bitrate })
+            .first else {
+            throw ResolverError.noAudio
+        }
 
-        guard let best = formats.compactMap({ format -> (Int, URL)? in
-            guard let mime = format["mimeType"] as? String,
-                  mime.hasPrefix("audio/"),
-                  let urlString = format["url"] as? String,
-                  let url = URL(string: urlString) else { return nil }
-            return (format["bitrate"] as? Int ?? 0, url)
-        }).max(by: { $0.0 < $1.0 }) else {
+        if best.needsCipher {
             throw ResolverError.cipherRequired
         }
-
-        return best.1
+        guard let url = best.directURL else {
+            throw ResolverError.noAudio
+        }
+        return url
     }
 
     private enum ResolverError: Error {
         case http
         case noStream
         case cipherRequired
+        case playability(String)
     }
 }
