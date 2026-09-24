@@ -4,7 +4,8 @@ module.exports = async function handler(req, res) {
   const device = req.headers && req.headers["x-zemer-device"];
 
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Range, Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Range, Content-Type, x-zemer-device");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
   res.setHeader("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
   res.setHeader("Cache-Control", "no-store");
 
