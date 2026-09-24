@@ -1,5 +1,7 @@
 module.exports = async function handler(req, res) {
   const videoId = req.query && req.query.v;
+  const range = req.headers && req.headers.range;
+  const device = req.headers && req.headers["x-zemer-device"];
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Range, Content-Type");
@@ -22,7 +24,9 @@ module.exports = async function handler(req, res) {
       {
         headers: {
           "x-zemer-debug": "1",
-          "Accept": "audio/*"
+          "Accept": "audio/*",
+          ...(range ? { Range: range } : {}),
+          ...(device ? { "x-zemer-device": device } : {})
         }
       }
     );
