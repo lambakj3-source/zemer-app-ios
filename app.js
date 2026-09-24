@@ -13,6 +13,7 @@ function renderSearch(data,q){const cats=data?.categories||{};const order=[["Son
 function bindRows(){document.querySelectorAll(".row").forEach(row=>row.addEventListener("click",async e=>{const i=Number(row.dataset.i);const section=row.closest(".section");const heading=section?.querySelector("h2")?.textContent||"";const data=window._lastCategories?.[heading.toLowerCase()]||[];const item=data[i];if(!item)return;if(heading==="Albums"){openAlbum(item);}else if(heading==="Artists"){openArtist(item);}else if(heading==="Podcasts"){openPodcast(item);}else if(item._videoId){state.queue=data.filter(x=>x._videoId);state.index=state.queue.findIndex(x=>idOf(x)===idOf(item));play(item);}}));}
 function homeItemKind(x){return x?._kind||x?.type||x?.kind||"";}
 function homeRowTitle(x){return x?.title||x?.name||x?.label||"";}
+function homeKind(x){const s=String(x?.kind||x?.type||x?.key||x?.title||x?.name||"").toLowerCase();if(s.includes("album"))return "albums";if(s.includes("artist"))return "artists";if(s.includes("playlist"))return "playlists";if(s.includes("video"))return "videos";if(s.includes("song")||s.includes("track"))return "songs";return s.replace(/[^a-z]/g,"");}
 function homeItems(v){if(Array.isArray(v))return v;return Array.isArray(v?.items)?v.items:Array.isArray(v?.results)?v.results:Array.isArray(v?.data)?v.data:[];}
 function homeCard(x,i,rowKind){
   const n=normalize(x,rowKind||homeItemKind(x));
@@ -27,7 +28,7 @@ function renderHome(data){
     rows.forEach((row,ri)=>{
       const items=homeItems(row);
       if(!items.length)return;
-      const kind=String(row?.kind||row?.type||"").toLowerCase();
+      const kind=homeKind(row);
       html+='<section class="homeSection"><div class="homeSectionHead"><h2>'+esc(row?.title||row?.name||"Featured")+'</h2></div><div class="homeRail">'+items.slice(0,12).map((x,i)=>homeCard(x,i,kind)).join("")+'</div></section>';
     });
   }else{
