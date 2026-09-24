@@ -15,7 +15,7 @@ Every tracked non-Kotlin path outside `docs/` is listed. Text files report line 
 | `AGENTS.md` | 1945 lines | text `.md` |
 | `LICENSE` | 674 lines | text `[none]` |
 | `README.md` | 9 lines | text `.md` |
-| `api/stream.js` | 66 lines | text `.js` |
+| `api/stream.js` | 70 lines | text `.js` |
 | `app/.gitignore` | 1 lines | text `[none]` |
 | `app/build.gradle.kts` | 295 lines | text `.kts`; plugins `com.android.application, android, kotlin.serialization, hilt, kotlin.ksp, compose.compiler, google.gms.google.services, firebase.crashlytics, rikka.tools.refine` |
 | `app/lint.xml` | 12 lines | text `.xml`; XML root `lint` |
